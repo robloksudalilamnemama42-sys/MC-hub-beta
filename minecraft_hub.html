@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minecraft Ultimate Hub</title>
+    <style>
+        /* CSS ДИЗАЙН */
+        :root { --mc-green: #4CAF50; --mc-dark: #1a1a1a; --mc-gray: #2b2b2b; --mc-light-gray: #3b3b3b; }
+        body { background-color: var(--mc-gray); color: #ffffff; font-family: 'Courier New', Courier, monospace; margin: 0; padding: 0; }
+        
+        /* Блокувальник екрану для обов'язкової реєстрації */
+        #auth-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100vh;
+            background: rgba(0,0,0,0.9); z-index: 1000;
+            display: flex; justify-content: center; align-items: center; flex-direction: column;
+            text-align: center; font-family: sans-serif;
+        }
+        #auth-overlay h2 { color: var(--mc-green); font-size: 2em; margin-bottom: 20px; font-family: 'Courier New', Courier, monospace; }
+        .google-btn-fake {
+            background-color: white; color: #757575; border: 1px solid #ccc; padding: 10px 20px;
+            font-size: 16px; border-radius: 5px; cursor: pointer; display: flex; align-items: center; gap: 10px; font-weight: bold; transition: background 0.2s;
+        }
+        .google-btn-fake:hover { background-color: #f5f5f5; }
+        
+        /* Основний сайт */
+        header { background-color: var(--mc-dark); padding: 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 4px solid var(--mc-green); }
+        h1 { margin: 0; color: var(--mc-green); }
+        nav { display: flex; gap: 5px; flex-wrap: wrap; }
+        nav button { background-color: var(--mc-green); color: white; border: 2px solid #2e7d32; padding: 10px 15px; cursor: pointer; font-family: inherit; font-weight: bold; }
+        nav button:hover { background-color: #45a049; }
+        
+        .container { padding: 20px; max-width: 1200px; margin: auto; }
+        .section { background-color: var(--mc-light-gray); padding: 20px; margin-bottom: 20px; border: 2px solid #555; border-radius: 5px; display: none; }
+        .active { display: block; }
+        
+        input, select, textarea { padding: 10px; margin: 5px 0; background: var(--mc-dark); color: white; border: 1px solid var(--mc-green); font-family: inherit; width: 100%; box-sizing: border-box;}
+        button.action-btn { background-color: var(--mc-green); color: white; padding: 10px 20px; border: none; cursor: pointer; font-family: inherit; font-weight: bold; margin-top: 10px;}
+        
+        .grid-layout { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .card { background: var(--mc-gray); padding: 15px; border: 1px solid #555; }
+        
+        /* Моди */
+        .mod-list li { margin: 15px 0; background: var(--mc-gray); padding: 10px; border-left: 4px solid var(--mc-green); list-style: none;}
+        .mod-list a { color: var(--mc-green); text-decoration: none; font-weight: bold; font-size: 1.2em;}
+        
+        /* Банери */
+        .banner-gallery { display: flex; gap: 20px; flex-wrap: wrap; }
+        .banner-item { width: 120px; height: 180px; border: 3px solid #fff; background-size: cover; position: relative; }
+        .banner-label { position: absolute; bottom: 0; width: 100%; background: rgba(0,0,0,0.7); text-align: center; padding: 5px 0; font-size: 0.8em;}
+        
+        /* Форум */
+        #forum-messages { max-height: 400px; overflow-y: auto; background: var(--mc-dark); padding: 15px; margin-bottom: 10px; border: 1px solid #555;}
+        .msg { margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #444; }
+        .msg-author { font-weight: bold; color: var(--mc-green); margin-bottom: 5px;}
+        .msg-time { font-size: 0.8em; color: #888; margin-left: 10px; }
+    </style>
+</head>
+<body>
+
+    <div id="auth-overlay">
+        <h2 id="t-auth-title">Minecraft Hub Authentication Required</h2>
+        <p style="color: #aaa; margin-bottom: 20px;" id="t-auth-desc">You must be logged in to view calculators, mods, and forum.</p>
+        
+        <button class="google-btn-fake" onclick="simulateLogin()">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="G" width="20">
+            <span id="t-auth-btn">Sign in with Google Account</span>
+        </button>
+        <p style="color: #666; font-size: 0.8em; margin-top: 15px;">*This is a local simulation. The "real" connection requires a server database.*</p>
+    </div>
+
+    <div id="main-content" style="display: none;">
+        <header>
+            <h1>MC Hub</h1>
+            <nav>
+                <button onclick="showSection('calculators')" id="btn-nav-calc">Calculators</button>
+                <button onclick="showSection('banners')" id="btn-nav-banners">Banners</button>
+                <button onclick="showSection('mods')" id="btn-nav-mods">Mods</button>
+                <button onclick="showSection('forum')" id="btn-nav-forum">Forum</button>
+            </nav>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <select id="lang-select" onchange="changeLanguage()">
+                    <option value="en" selected>EN</option>
+                    <option value="uk">UA</option>
+                </select>
+                <span id="user-display" style="color: var(--mc-green); font-weight: bold;"></span>
+            </div>
+        </header>
+
+        <div class="container">
+            <div id="calculators" class="section active">
+                <h2 id="t-calc-title">Calculators</h2>
+                <div class="grid-layout">
+                    <div class="card">
+                        <h3 id="t-calc-coord">Overworld ↔ Nether Coordinates</h3>
+                        <input type="number" id="overworldX" placeholder="X Coordinate">
+                        <input type="number" id="overworldZ" placeholder="Z Coordinate">
+                        <button class="action-btn" onclick="calcNether()" id="t-btn-nether">Calculate Nether</button>
+                        <p id="netherResult" style="color: #ffaa00; font-weight: bold; margin-top: 10px;"></p>
+                    </div>
+                    
+                    <div class="card">
+                        <h3 id="t-calc-ench">Enchantment Level Calculator</h3>
+                        <select id="tool-type">
+                            <option value="pickaxe" id="t-opt-pickaxe">Pickaxe</option>
+                            <option value="sword" id="t-opt-sword">Sword</option>
+                        </select>
+                        <p id="t-calc-ench-desc">Requires complex probability logic (JS tables). Select tool to see base stats.</p>
+                        <button class="action-btn" id="t-btn-ench">Simulate (WIP)</button>
+                    </div>
+
+                    <div class="card">
+                        <h3 id="t-calc-res">Resource Calculator</h3>
+                        <input type="number" placeholder="How many Beacons?">
+                        <button class="action-btn" id="t-btn-res">Calculate Glass, Obsidian, Stars</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="banners" class="section">
+                <h2 id="t-banners-title">Banner Gallery</h2>
+                <p id="t-banners-desc">Popular designs for your shields and bases.</p>
+                <div class="banner-gallery">
+                    <div class="banner-item" style="background-color: black;">
+                        <div style="position: absolute; width:100%; height:100%; border: 4px solid red; border-radius: 50%; box-sizing: border-box;"></div>
+                        <div class="banner-label">Evil Eye</div>
+                    </div>
+                    <div class="banner-item" style="background-color: blue;">
+                        <div style="position: absolute; width:100%; height:100%; background: linear-gradient(to bottom, white 50%, transparent 50%);"></div>
+                        <div class="banner-label">Sky Split</div>
+                    </div>
+                    <div class="banner-item" style="background-color: white;">
+                        <div style="font-size: 50px; text-align: center; color: black; line-height: 180px;">☠️</div>
+                        <div class="banner-label">Pirate</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="mods" class="section">
+                <h2 id="t-mods-title">Top Minecraft Mods (Download Hub)</h2>
+                <ul class="mod-list">
+                    <li>
+                        <a href="https://modrinth.com/mod/sodium" target="_blank">1. Sodium (Fabric/Quilt)</a><br>
+                        <span id="t-mod-1">The best optimization mod currently available. Drastically increases FPS.</span>
+                    </li>
+                    <li>
+                        <a href="https://www.curseforge.com/minecraft/mc-mods/jei" target="_blank">2. Just Enough Items (JEI)</a><br>
+                        <span id="t-mod-2">View all recipes and items directly in your inventory screen.</span>
+                    </li>
+                    <li>
+                        <a href="https://modrinth.com/mod/iris" target="_blank">3. Iris Shaders</a><br>
+                        <span id="t-mod-3">Modern shader support for Minecraft. Works perfectly with Sodium.</span>
+                    </li>
+                    <li>
+                        <a href="https://www.curseforge.com/minecraft/mc-mods/xaeros-minimap" target="_blank">4. Xaero's Minimap</a><br>
+                        <span id="t-mod-4">A clean, functional minimap that keeps the vanilla aesthetic.</span>
+                    </li>
+                    <li>
+                        <a href="https://www.curseforge.com/minecraft/mc-mods/create" target="_blank">5. Create</a><br>
+                        <span id="t-mod-5">A massive engineering mod. Build complex machines and automation.</span>
+                    </li>
+                </ul>
+            </div>
+
+            <div id="forum" class="section">
+                <h2 id="t-forum-title">Community Forum</h2>
+                <p id="t-forum-desc" style="color: #ffaa00; font-size: 0.9em;">(Local Storage mode: messages save and load, but only on your current browser.)</p>
+                
+                <div id="forum-messages">
+                    </div>
+                
+                <textarea id="msgInput" rows="3" placeholder="Type your message here..."></textarea>
+                <button class="action-btn" onclick="postMessage()" id="t-btn-post">Post Message</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ГЛОБАЛЬНІ ЗМІННІ
+        let currentUser = null;
+
+        // 1. АВТОРИЗАЦІЯ (ІМІТАЦІЯ ДЛЯ ФРОНТЕНДУ)
+        function simulateLogin() {
+            // В реальності тут ми отримуємо дані від Google після перевірки пароля.
+            // Оскільки ми на фронтенді, я створюю "сесію" вручну.
+            let nick = prompt("Enter your Minecraft nickname to register:", "Steve_Pro");
+            if (nick) {
+                currentUser = nick;
+                document.getElementById('auth-overlay').style.display = 'none';
+                document.getElementById('main-content').style.display = 'block';
+                document.getElementById('user-display').innerText = "Logged as: " + currentUser;
+                loadForum(); // Завантажуємо форум після входу
+            }
+        }
+
+        // 2. НАВІГАЦІЯ В ТАБАХ
+        function showSection(sectionId) {
+            document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
+            document.getElementById(sectionId).classList.add('active');
+        }
+
+        // 3. РОБОЧИЙ КАЛЬКУЛЯТОР КООРДИНАТ
+        function calcNether() {
+            let x = document.getElementById('overworldX').value;
+            let z = document.getElementById('overworldZ').value;
+            let resultEl = document.getElementById('netherResult');
+            let lang = document.getElementById('lang-select').value;
+            
+            if (x === "" || z === "") {
+                resultEl.innerText = lang === 'en' ? "Please enter both X and Z." : "Будь ласка, введіть X та Z.";
+                return;
+            }
+
+            let netherX = Math.round(x / 8);
+            let netherZ = Math.round(z / 8);
+            
+            resultEl.innerText = lang === 'en' 
+                ? `Nether Coordinates: X: ${netherX}, Z: ${netherZ}` 
+                : `Координати Незеру: X: ${netherX}, Z: ${netherZ}`;
+        }
+
+        // 4. РОБОЧИЙ ФОРУМ (LOCALSTORAGE - Збереження в браузері)
+        // Ти просив, щоб кнопка працювала. Тепер вона працює: дані записуються у пам'ять браузера і залишаються там після оновлення сторінки.
+        function loadForum() {
+            let msgs = JSON.parse(localStorage.getItem('mc_forum_msgs') || '[]');
+            let forumHtml = "";
+            
+            if (msgs.length === 0) {
+                forumHtml = "<p id='t-no-msgs' style='color:#777;'>No messages yet. Be the first!</p>";
+            } else {
+                msgs.forEach(m => {
+                    forumHtml += `
+                        <div class="msg">
+                            <div class="msg-author">${m.user} <span class="msg-time">${m.time}</span></div>
+                            <div class="msg-text">${m.text}</div>
+                        </div>
+                    `;
+                });
+            }
+            document.getElementById('forum-messages').innerHTML = forumHtml;
+            // Прокрутка донизу
+            let msgBox = document.getElementById('forum-messages');
+            msgBox.scrollTop = msgBox.scrollHeight;
+        }
+
+        function postMessage() {
+            let input = document.getElementById('msgInput');
+            let text = input.value.trim();
+            
+            if (text === "") return; // Не відправляємо порожні
+
+            // Завантажуємо старі повідомлення
+            let msgs = JSON.parse(localStorage.getItem('mc_forum_msgs') || '[]');
+            
+            // Створюємо нове повідомлення з часом
+            let newMsg = {
+                user: currentUser,
+                text: text,
+                time: new Date().toLocaleTimeString()
+            };
+            
+            msgs.push(newMsg);
+            
+            // Зберігаємо назад у пам'ять браузера
+            localStorage.setItem('mc_forum_msgs', JSON.stringify(msgs));
+            
+            input.value = ""; // Очищаємо поле
+            loadForum(); // Оновлюємо відображення форуму
+        }
+
+        // 5. СЛОВНИК ТА ПЕРЕМИКАЧ МОВ (Справжній робочий механізм)
+        const dict = {
+            "en": {
+                "t-auth-title": "Minecraft Hub Authentication Required",
+                "t-auth-desc": "You must be logged in to view calculators, mods, and forum.",
+                "t-auth-btn": "Sign in with Google Account",
+                "btn-nav-calc": "Calculators", "btn-nav-banners": "Banners", "btn-nav-mods": "Mods", "btn-nav-forum": "Forum",
+                "t-calc-title": "Calculators", "t-calc-coord": "Overworld ↔ Nether Coordinates",
+                "t-btn-nether": "Calculate Nether", "t-calc-ench": "Enchantment Level Calculator",
+                "t-opt-pickaxe": "Pickaxe", "t-opt-sword": "Sword", "t-calc-ench-desc": "Requires complex probability logic (JS tables). Select tool to see base stats.",
+                "t-btn-ench": "Simulate (WIP)", "t-calc-res": "Resource Calculator", "t-btn-res": "Calculate Glass, Obsidian, Stars",
+                "t-banners-title": "Banner Gallery", "t-banners-desc": "Popular designs for your shields and bases.",
+                "t-mods-title": "Top Minecraft Mods (Download Hub)",
+                "t-mod-1": "The best optimization mod currently available. Drastically increases FPS.",
+                "t-mod-2": "View all recipes and items directly in your inventory screen.",
+                "t-mod-3": "Modern shader support for Minecraft. Works perfectly with Sodium.",
+                "t-mod-4": "A clean, functional minimap that keeps the vanilla aesthetic.",
+                "t-mod-5": "A massive engineering mod. Build complex machines and automation.",
+                "t-forum-title": "Community Forum", "t-btn-post": "Post Message"
+            },
+            "uk": {
+                "t-auth-title": "Потрібна авторизація Minecraft Hub",
+                "t-auth-desc": "Ви повинні увійти, щоб переглядати калькулятори, моди та форум.",
+                "t-auth-btn": "Увійти через Google Акаунт",
+                "btn-nav-calc": "Калькулятори", "btn-nav-banners": "Банери", "btn-nav-mods": "Моди", "btn-nav-forum": "Форум",
+                "t-calc-title": "Калькулятори", "t-calc-coord": "Координати: Верхній світ ↔ Незер",
+                "t-btn-nether": "Порахувати Незер", "t-calc-ench": "Калькулятор зачарувань",
+                "t-opt-pickaxe": "Кайло", "t-opt-sword": "Меч", "t-calc-ench-desc": "Потребує складної логіки ймовірностей. Оберіть інструмент для бази.",
+                "t-btn-ench": "Симуляція (В розробці)", "t-calc-res": "Калькулятор ресурсів", "t-btn-res": "Порахувати скло, обсидіан, зірки",
+                "t-banners-title": "Галерея банерів", "t-banners-desc": "Популярні дизайни для щитів та баз.",
+                "t-mods-title": "Топ Майнкрафт Модів (Завантаження)",
+                "t-mod-1": "Найкращий мод на оптимізацію. Радикально збільшує FPS.",
+                "t-mod-2": "Переглядайте всі крафти та предмети прямо в інвентарі.",
+                "t-mod-3": "Сучасна підтримка шейдерів. Ідеально працює разом із Sodium.",
+                "t-mod-4": "Зручна, функціональна міні-карта, що зберігає ванільний стиль.",
+                "t-mod-5": "Масштабний інженерний мод. Будуй складні механізми та автоматизацію.",
+                "t-forum-title": "Форум Спільноти", "t-btn-post": "Надіслати повідомлення"
+            }
+        };
+
+        function changeLanguage() {
+            let lang = document.getElementById('lang-select').value;
+            for (let id in dict[lang]) {
+                let el = document.getElementById(id);
+                if (el) el.innerText = dict[lang][id];
+            }
+            // Оновлюємо плейсхолдери (ті, що всередині полів вводу)
+            document.getElementById('overworldX').placeholder = lang === 'en' ? "X Coordinate" : "Координата X";
+            document.getElementById('overworldZ').placeholder = lang === 'en' ? "Z Coordinate" : "Координата Z";
+            document.getElementById('msgInput').placeholder = lang === 'en' ? "Type your message here..." : "Напишіть ваше повідомлення тут...";
+        }
+    </script>
+</body>
+</html>
